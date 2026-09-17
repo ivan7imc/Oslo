@@ -3,28 +3,28 @@
    (sem dependências de DOM — testável em Node)
    ============================================================ */
 
-/* 📍 Troque pelo WhatsApp real da Renove (DDI + DDD + número, só dígitos). */
-export const WHATSAPP_NUMBER = "5535999990000"; // ← TODO: número real (ex.: 5535988887777)
+/* WhatsApp da Renove (DDI + DDD + número, só dígitos). */
+export const WHATSAPP_NUMBER = "5535999479680";
 
 /* ---------- Catálogo de serviços (preço base em R$) ---------- */
 export const PRODUCTS = [
-  { id: "sofa2",    label: "Sofá 2 lugares",             sub: "compacto e charmoso",     base: 150 },
-  { id: "sofa3",    label: "Sofá 3 lugares",             sub: "o mais pedido",           base: 180 },
-  { id: "sofa4",    label: "Sofá 4 lugares",             sub: "tamanho família",         base: 220 },
-  { id: "sofa5",    label: "Sofá 5 lugares / modular",   sub: "grandes espaços",         base: 280 },
-  { id: "poltrona", label: "Poltrona",                   sub: "cada poltrona",           base: 90 },
-  { id: "puff",     label: "Puff / ottoman",             sub: "cada peça",               base: 70 },
-  { id: "cadeira",  label: "Cadeira de jantar",          sub: "por unidade",             base: 45 },
-  { id: "casal",    label: "Cama de casal (colchão + box)", sub: "kit completo",         base: 170 },
-  { id: "colchao",  label: "Colchão queen/king",         sub: "só o colchão",            base: 200 },
-  { id: "carro",    label: "Banco de carro",             sub: "por assento",             base: 60 },
+  { id: "sofa2",    label: "Sofá 2 lugares",             base: 150 },
+  { id: "sofa3",    label: "Sofá 3 lugares",             base: 180 },
+  { id: "sofa4",    label: "Sofá 4 lugares",             base: 220 },
+  { id: "sofa5",    label: "Sofá 5 lugares / modular",   base: 280 },
+  { id: "poltrona", label: "Poltrona",                   base: 90 },
+  { id: "puff",     label: "Puff / ottoman",             base: 70 },
+  { id: "cadeira",  label: "Cadeira de jantar",          base: 45 },
+  { id: "casal",    label: "Cama de casal (colchão + box)", base: 170 },
+  { id: "colchao",  label: "Colchão queen/king",         base: 200 },
+  { id: "carro",    label: "Banco de carro",             base: 60 },
 ];
 
 /* ---------- Níveis de sujeira (multiplicador sobre o preço base) ---------- */
 export const LEVELS = [
-  { id: "leve",   label: "Leve",   desc: "Aparência ok, só manutenção",                    mult: 1.0 },
-  { id: "media",  label: "Normal", desc: "Uso diário, alguns respingos",                   mult: 1.15 },
-  { id: "pesada", label: "Pesada", desc: "Manchas, pelos de pet, tempo sem limpeza",       mult: 1.4 },
+  { id: "leve",   label: "Leve",   desc: "só manutenção",                     mult: 1.0 },
+  { id: "media",  label: "Normal", desc: "uso diário",                        mult: 1.15 },
+  { id: "pesada", label: "Pesada", desc: "manchas, pets, sem limpeza há tempo", mult: 1.4 },
 ];
 
 /* ---------- Cidades atendidas (Poços de Caldas e região) ----------

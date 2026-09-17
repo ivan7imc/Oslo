@@ -1,5 +1,6 @@
 /* ============================================================
    RENOVE — UI da Calculadora de Preço de Higienização
+   Mobile-first, mínimo clique até o WhatsApp
    Lógica de dados/preço/cidades: ./data.js
    ============================================================ */
 import {
@@ -15,11 +16,20 @@ import {
 
 const $ = (sel) => document.querySelector(sel);
 
-/* ---------- Estado ---------- */
+/* ---------- Estado (com pré-seleção: o lead só toca na cidade) ---------- */
 const state = { product: null, level: null, city: null, cityRaw: "" };
 
 const resultPanel = $("#result-panel");
 const cityInput = $("#city-input");
+const fab = $("#wa-fab");
+const mct = {
+  label: $("#mct-label"),
+  price: $("#mct-price"),
+  btn: $("#mct-wa"),
+};
+
+/* cidades exibidas como chip rápido (1 toque) */
+const CITY_CHIPS = ["Poços de Caldas", "Bandeira do Sul", "Passos"];
 
 const escapeHtml = (s) =>
   s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -38,7 +48,7 @@ function renderOptions() {
     <button type="button" class="opt" data-product="${p.id}" aria-pressed="false">
       <span class="opt-main">
         <span class="opt-title">${p.label}</span>
-        <span class="opt-sub">a partir de ${nfBRL.format(p.base)} · ${p.sub}</span>
+        <span class="opt-sub">a partir de ${nfBRL.format(p.base)}</span>
       </span>
       <span class="opt-check">${checkSvg}</span>
     </button>`
@@ -48,13 +58,14 @@ function renderOptions() {
   levelWrap.innerHTML = LEVELS.map(
     (l) => `
     <button type="button" class="opt" data-level="${l.id}" aria-pressed="false">
-      <span class="opt-main level-main">
+      <span class="level-main">
         <span class="opt-dot"></span>
         <span class="opt-texts">
           <span class="opt-title">${l.label}</span>
           <span class="opt-sub">${l.desc}</span>
         </span>
       </span>
+      <span class="opt-check">${checkSvg}</span>
     </button>`
   ).join("");
 
@@ -75,7 +86,34 @@ function renderOptions() {
   });
 }
 
-/* ---------- Datalist + rodapé (cidades) ---------- */
+/* pré-seleciona o cenário mais comum: sofá 3 lugares + sujeira normal */
+function selectDefaults() {
+  state.product = PRODUCTS.find((p) => p.id === "sofa3");
+  state.level = LEVELS.find((l) => l.id === "media");
+  document.querySelector('[data-product="sofa3"]')?.setAttribute("aria-pressed", "true");
+  document.querySelector('[data-level="media"]')?.setAttribute("aria-pressed", "true");
+}
+
+/* ---------- Cidades: chips + datalist + rodapé ---------- */
+function renderCityChips() {
+  const wrap = $("#city-chips");
+  wrap.innerHTML = CITY_CHIPS.map(
+    (name) => `<button type="button" class="city-chip" data-city="${name}" aria-pressed="false">📍 ${name}</button>`
+  ).join("");
+  wrap.addEventListener("click", (e) => {
+    const btn = e.target.closest(".city-chip");
+    if (!btn) return;
+    cityInput.value = btn.dataset.city;
+    onCityInput();
+  });
+}
+
+function syncChips(cityName) {
+  document.querySelectorAll(".city-chip").forEach((b) =>
+    b.setAttribute("aria-pressed", b.dataset.city === cityName ? "true" : "false")
+  );
+}
+
 function renderAreas() {
   $("#city-list").innerHTML = AREAS.map((a) => `<option value="${a.name}"></option>`).join("");
   $("#area-list").innerHTML = AREAS.map((a) => `<li>${a.name}</li>`).join("");
@@ -94,87 +132,92 @@ function countUp(el, target) {
   requestAnimationFrame(tick);
 }
 
+function setQuoteReady(product, level, city, avg, waHref) {
+  mct.label.textContent = `${product.label} · sujeira ${level.label}`;
+  mct.price.textContent = nfBRL.format(avg);
+  mct.btn.href = waHref;
+  fab.href = waHref; // o FAB também vira atalho do orçamento pronto
+  document.body.classList.add("quote-ready");
+}
+
+function setQuoteNotReady() {
+  document.body.classList.remove("quote-ready");
+}
+
 function renderResult() {
   const { product, level, city } = state;
 
-  // Estado 0: nada escolhido ainda
-  if (!product && !level && !city) {
-    resultPanel.innerHTML = `
-      <div class="result-state result-empty">
-        <div class="empty-ico">🧮</div>
-        <h3>Seu preço aparece aqui</h3>
-        <p>Escolha o estofado, o nível de sujeira e digite sua cidade ao lado.</p>
-      </div>`;
-    return;
-  }
-
   // Cidade digitada mas fora da região → aviso + captura de interesse
   if (city === null && state.cityRaw.trim()) {
+    setQuoteNotReady();
     const raw = escapeHtml(state.cityRaw.trim());
     resultPanel.innerHTML = `
       <div class="result-state result-noserved">
         <span class="result-city no">✕ Ainda não atendemos essa cidade</span>
         <h3>Ainda não chegamos em ${raw}</h3>
-        <p>Nossa equipe atua em <strong>Poços de Caldas e região</strong>. Estamos expandindo — quer ser avisado assim que chegarmos perto de você?</p>
-        <div class="areas-preview">${AREAS.slice(0, 6).map((a) => `<span>${a.name}</span>`).join("")}<span>+${AREAS.length - 6} cidades</span></div>
+        <p>Atendemos <strong>Poços de Caldas e região</strong>. Quer ser avisado quando chegarmos perto de você?</p>
+        <div class="areas-preview">${AREAS.slice(0, 4).map((a) => `<span>${a.name}</span>`).join("")}<span>+${AREAS.length - 4} cidades</span></div>
         <a class="btn btn-wa" href="${waLink(
           `Olá! Visitei o site da Renove. Estou em ${state.cityRaw.trim()} e vi que vocês ainda não atendem por lá. Podem me avisar quando chegarem? 👋`
         )}" target="_blank" rel="noopener">${waIcon} Me avise quando chegarem</a>
-        <a class="btn alt-btn" href="#servicos">Conhecer os serviços</a>
       </div>`;
     return;
   }
 
-  // Faltando estofado ou nível
-  if (!product || !level) {
+  // Faltando algo
+  if (!product || !level || !city) {
+    setQuoteNotReady();
+    const missing = [];
+    if (!product) missing.push("o estofado");
+    if (!level) missing.push("o nível de sujeira");
+    if (!city) missing.push("sua cidade");
+    const title = missing.length === 1 ? "Só falta " + missing[0] : "Faltam só " + missing.join(" e ");
     resultPanel.innerHTML = `
       <div class="result-state result-empty">
-        <div class="empty-ico">⏳</div>
-        <h3>Quase lá!</h3>
-        <p>${!product ? "Escolha o tipo de estofado para continuar." : "Agora escolha o nível de sujeira para ver o preço."}</p>
+        <div class="empty-ico">${missing.length === 1 && missing[0] === "sua cidade" ? "📍" : "⏳"}</div>
+        <h3>${title}</h3>
+        <p>${missing[0] === "sua cidade" ? "Toque em uma das opções acima ou digite." : "Toque nas opções acima para continuar."}</p>
       </div>`;
     return;
   }
 
-  // Tudo pronto → preço + CTA direto pro WhatsApp
+  // Tudo pronto → preço + WhatsApp
   const { avg, range } = priceFor(product, level);
+  const waHref = waLink(quoteMessage(product, level, city));
 
   resultPanel.innerHTML = `
     <div class="result-state">
       <span class="result-city ok">✓ Atendemos ${escapeHtml(city.name)}</span>
       <span class="price-label">Valor médio do serviço</span>
       <div class="price" id="price-value">${nfBRL.format(0)}</div>
-      <p class="price-range">faixa média de <strong>${nfBRL.format(range[0])}</strong> a <strong>${nfBRL.format(range[1])}</strong></p>
+      <p class="price-range">faixa de <strong>${nfBRL.format(range[0])}</strong> a <strong>${nfBRL.format(range[1])}</strong></p>
       <div class="result-breakdown">
         <span>Estofado: <b>${escapeHtml(product.label)}</b></span>
         <span>Sujeira: <b>${escapeHtml(level.label)}</b></span>
         <span>Cidade: <b>${escapeHtml(city.name)}</b></span>
       </div>
-      <a class="btn btn-wa btn-lg" href="${waLink(quoteMessage(product, level, city))}" target="_blank" rel="noopener">${waIcon} Pedir orçamento no WhatsApp</a>
-      <p class="result-micro">Resposta em minutos no horário comercial · Sem compromisso</p>
+      <a class="btn btn-wa btn-lg" href="${waHref}" target="_blank" rel="noopener">${waIcon} Pedir orçamento no WhatsApp</a>
+      <p class="result-micro">Resposta em minutos · Sem compromisso</p>
     </div>`;
 
   countUp($("#price-value"), avg);
+  setQuoteReady(product, level, city, avg, waHref);
 }
 
 function onCityInput() {
   state.cityRaw = cityInput.value;
   state.city = findCity(cityInput.value);
+  syncChips(state.city ? state.city.name : null);
   renderResult();
 }
 
 cityInput.addEventListener("input", onCityInput);
 cityInput.addEventListener("change", onCityInput);
 
-/* ---------- Links de WhatsApp genéricos (hero, seções, FAB, rodapé) ---------- */
+/* ---------- Links de WhatsApp genéricos ---------- */
 const genericMsg = waLink("Olá! Vim pelo site da Renove e quero um orçamento de higienização de estofados. 🛋️");
-document.querySelectorAll("#hero-wa, #why-wa, #final-wa, #wa-fab, #footer-wa").forEach((a) => (a.href = genericMsg));
-
-/* ---------- Header com blur ao rolar ---------- */
-const header = document.querySelector(".site-header");
-const onScroll = () => header.classList.toggle("scrolled", window.scrollY > 24);
-onScroll();
-window.addEventListener("scroll", onScroll, { passive: true });
+document.querySelectorAll("#why-wa, #final-wa, #footer-wa").forEach((a) => (a.href = genericMsg));
+fab.href = genericMsg;
 
 /* ---------- Reveal on scroll ---------- */
 const io = new IntersectionObserver(
@@ -185,14 +228,22 @@ const io = new IntersectionObserver(
         io.unobserve(en.target);
       }
     }),
-  { threshold: 0.12 }
+  { threshold: 0.1 }
 );
 document.querySelectorAll(".reveal").forEach((el) => io.observe(el));
 
 /* ---------- Ano do rodapé ---------- */
 $("#year").textContent = new Date().getFullYear();
 
+/* ---------- Performance mobile: hero não aparece em telas pequenas ----------
+   evita baixar ~200 KB à toa no navegador embutido do WhatsApp */
+if (matchMedia("(max-width: 920px)").matches) {
+  document.querySelector(".hero-visual img")?.removeAttribute("src");
+}
+
 /* ---------- Init ---------- */
 renderOptions();
+selectDefaults();
+renderCityChips();
 renderAreas();
 renderResult();

@@ -1,7 +1,10 @@
 {
-  "$schema": "node_modules/wrangler/config-schema.json",
   "name": "renove-estofados",
   "compatibility_date": "2026-09-01",
-  // Saída estática da landing page — Cloudflare Pages
-  "pages_build_output_dir": "public"
+  // Landing page estática (HTML/CSS/JS puro, sem build) publicada como
+  // Worker com assets estáticos — nenhum script de servidor é necessário.
+  // Deploy: npx wrangler deploy   (lê a pasta ./public)
+  "assets": {
+    "directory": "./public"
+  }
 }

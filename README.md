@@ -21,21 +21,24 @@ npx serve public
 python3 -m http.server 8080 -d public
 ```
 
-## Publicando no Cloudflare Pages
+## Publicando no Cloudflare (Worker + assets estáticos)
 
-**Opção 1 — via Git (recomendado):**
-1. No painel do Cloudflare: **Workers & Pages → Create → Pages → Connect to Git**
+O `wrangler.jsonc` aponta a pasta `public/` como `assets.directory`, então o deploy publica o site como **Worker com assets estáticos** — não existe passo de build.
+
+**Opção 1 — via Git (Workers Builds):**
+1. No painel do Cloudflare: **Workers & Pages → Create → Workers → Connect to Git**
 2. Selecione este repositório
-3. Build settings: **Build command: (deixe vazio)** · **Build output directory: `public`**
-4. Deploy. Pronto — a página roda no `*.pages.dev` (ou no domínio personalizado).
+3. Build command: **(deixe vazio)** · Deploy command: **`npx wrangler deploy`**
+4. Deploy. A página roda em `https://renove-estofados.<seu-subdominio>.workers.dev` (ou no domínio personalizado)
 
-**Opção 2 — via Wrangler CLI:**
+**Opção 2 — via Wrangler CLI (na sua máquina):**
 
 ```bash
-npx wrangler pages deploy public --project-name=renove-estofados
+npx wrangler login
+npx wrangler deploy
 ```
 
-(o `wrangler.jsonc` na raiz já aponta a pasta `public` como output)
+> **Atenção:** `npx wrangler deploy` é comando de **Workers**. Se a config tiver só `pages_build_output_dir` (formato Pages), ele falha com `Missing entry-point to Worker script or to assets directory`. Se preferir **Cloudflare Pages** (`*.pages.dev`), troque a config para `"pages_build_output_dir": "public"` e use `npx wrangler pages deploy public --project-name=renove-estofados` — as duas chaves não funcionam juntas no mesmo comando.
 
 ## Configurações rápidas
 
@@ -60,5 +63,5 @@ public/
 ├── js/app.js           # UI, pré-seleção, chips, barra de CTA
 └── images/             # hero.jpg, before-after.jpg
 test/calc.test.mjs      # testes da lógica (node test/calc.test.mjs)
-wrangler.jsonc          # config Cloudflare Pages
+wrangler.jsonc          # config Cloudflare Workers (assets estáticos)
 ```

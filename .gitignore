@@ -1,0 +1,8 @@
+# Wrangler / Node
+node_modules/
+.wrangler/
+.dev.vars
+.wrangler.toml.bak
+
+# Sistema
+.DS_Store

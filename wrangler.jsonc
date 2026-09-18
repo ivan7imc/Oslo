@@ -1,0 +1,7 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "renove-estofados",
+  "compatibility_date": "2026-09-01",
+  // Saída estática da landing page — Cloudflare Pages
+  "pages_build_output_dir": "public"
+}
